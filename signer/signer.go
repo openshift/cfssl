@@ -46,7 +46,7 @@ type Extension struct {
 // the CSR, optional subject information, and the signature profile.
 //
 // Extensions provided in the signRequest are copied into the certificate, as
-// long as they are in the ExtensionWhitelist for the signer's policy.
+// long as they are in the ExtensionAllowlist for the signer's policy.
 // Extensions requested in the CSR are ignored, except for those processed by
 // ParseCertificateRequest (mainly subjectAltName).
 type SignRequest struct {

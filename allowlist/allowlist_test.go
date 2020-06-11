@@ -1,4 +1,4 @@
-package whitelist
+package allowlist
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ type StringLookup struct{}
 
 func (lu StringLookup) Address(args ...interface{}) (net.IP, error) {
 	if len(args) != 1 {
-		return nil, errors.New("whitelist: lookup requires a string")
+		return nil, errors.New("allowlist: lookup requires a string")
 	}
 
 	var s string
@@ -23,12 +23,12 @@ func (lu StringLookup) Address(args ...interface{}) (net.IP, error) {
 	case string:
 		s = arg
 	default:
-		return nil, errors.New("whitelist: lookup requires a string")
+		return nil, errors.New("allowlist: lookup requires a string")
 	}
 
 	ip := net.ParseIP(s)
 	if ip == nil {
-		return nil, errors.New("whitelist: no address found")
+		return nil, errors.New("allowlist: no address found")
 	}
 	return ip, nil
 }
@@ -62,26 +62,26 @@ func delIPString(wl HostACL, addr string, t *testing.T) {
 	wl.Remove(ip)
 }
 
-func TestBasicWhitelist(t *testing.T) {
+func TestBasicallowlist(t *testing.T) {
 	wl := NewBasic()
 
 	if checkIPString(wl, "127.0.0.1", t) {
-		t.Fatal("whitelist should have denied address")
+		t.Fatal("allowlist should have denied address")
 	}
 
 	addIPString(wl, "127.0.0.1", t)
 	if !checkIPString(wl, "127.0.0.1", t) {
-		t.Fatal("whitelist should have permitted address")
+		t.Fatal("allowlist should have permitted address")
 	}
 
 	delIPString(wl, "127.0.0.1", t)
 	if checkIPString(wl, "127.0.0.1", t) {
-		t.Fatal("whitelist should have denied address")
+		t.Fatal("allowlist should have denied address")
 	}
 
 	addIPString(wl, "::1", t)
 	if checkIPString(wl, "127.0.0.1", t) {
-		t.Fatal("whitelist should have denied address")
+		t.Fatal("allowlist should have denied address")
 	}
 
 	wl.Add(nil)
@@ -89,21 +89,21 @@ func TestBasicWhitelist(t *testing.T) {
 	wl.Permitted(nil)
 }
 
-func TestStubWhitelist(t *testing.T) {
+func TestStuballowlist(t *testing.T) {
 	wl := NewHostStub()
 
 	if !checkIPString(wl, "127.0.0.1", t) {
-		t.Fatal("whitelist should have permitted address")
+		t.Fatal("allowlist should have permitted address")
 	}
 
 	addIPString(wl, "127.0.0.1", t)
 	if !checkIPString(wl, "127.0.0.1", t) {
-		t.Fatal("whitelist should have permitted address")
+		t.Fatal("allowlist should have permitted address")
 	}
 
 	delIPString(wl, "127.0.0.1", t)
 	if !checkIPString(wl, "127.0.0.1", t) {
-		t.Fatal("whitelist should have permitted address")
+		t.Fatal("allowlist should have permitted address")
 	}
 }
 
@@ -119,8 +119,8 @@ func TestMarshalHost(t *testing.T) {
 	ip = net.ParseIP("192.168.3.2")
 	tv["test-a"].Add(ip)
 
-	if len(tv["test-a"].whitelist) != 2 {
-		t.Fatalf("Expected whitelist to have 2 addresses, but have %d", len(tv["test-a"].whitelist))
+	if len(tv["test-a"].allowlist) != 2 {
+		t.Fatalf("Expected allowlist to have 2 addresses, but have %d", len(tv["test-a"].allowlist))
 	}
 
 	out, err := json.Marshal(tv)

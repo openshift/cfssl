@@ -20,16 +20,16 @@ import (
 	ocspConfig "github.com/cloudflare/cfssl/ocsp/config"
 )
 
-// A CSRWhitelist stores booleans for fields in the CSR. If a CSRWhitelist is
+// A CSRAllowlist stores booleans for fields in the CSR. If a CSRAllowlist is
 // not present in a SigningProfile, all of these fields may be copied from the
-// CSR into the signed certificate. If a CSRWhitelist *is* present in a
-// SigningProfile, only those fields with a `true` value in the CSRWhitelist may
+// CSR into the signed certificate. If a CSRAllowlist *is* present in a
+// SigningProfile, only those fields with a `true` value in the CSRAllowlist may
 // be copied from the CSR to the signed certificate. Note that some of these
 // fields, like Subject, can be provided or partially provided through the API.
 // Since API clients are expected to be trusted, but CSRs are not, fields
-// provided through the API are not subject to whitelisting through this
+// provided through the API are not subject to allowlisting through this
 // mechanism.
-type CSRWhitelist struct {
+type CSRAllowlist struct {
 	Subject, PublicKeyAlgorithm, PublicKey, SignatureAlgorithm bool
 	DNSNames, IPAddresses, EmailAddresses                      bool
 }
@@ -74,7 +74,7 @@ type SigningProfile struct {
 	RemoteName          string     `json:"remote"`
 	NotBefore           time.Time  `json:"not_before"`
 	NotAfter            time.Time  `json:"not_after"`
-	NameWhitelistString string     `json:"name_whitelist"`
+	NameAllowlistString string     `json:"name_allowlist"`
 	AuthRemote          AuthRemote `json:"auth_remote"`
 	CTLogServers        []string   `json:"ct_log_servers"`
 	AllowedExtensions   []OID      `json:"allowed_extensions"`
@@ -86,9 +86,9 @@ type SigningProfile struct {
 	Provider                    auth.Provider
 	RemoteProvider              auth.Provider
 	RemoteServer                string
-	CSRWhitelist                *CSRWhitelist
-	NameWhitelist               *regexp.Regexp
-	ExtensionWhitelist          map[string]bool
+	CSRAllowlist                *CSRAllowlist
+	NameAllowlist               *regexp.Regexp
+	ExtensionAllowlist          map[string]bool
 	ClientProvidesSerialNumbers bool
 }
 
@@ -257,19 +257,19 @@ func (p *SigningProfile) populate(cfg *Config) error {
 		}
 	}
 
-	if p.NameWhitelistString != "" {
-		log.Debug("compiling whitelist regular expression")
-		rule, err := regexp.Compile(p.NameWhitelistString)
+	if p.NameAllowlistString != "" {
+		log.Debug("compiling allowlist regular expression")
+		rule, err := regexp.Compile(p.NameAllowlistString)
 		if err != nil {
 			return cferr.Wrap(cferr.PolicyError, cferr.InvalidPolicy,
-				errors.New("failed to compile name whitelist section"))
+				errors.New("failed to compile name allowlist section"))
 		}
-		p.NameWhitelist = rule
+		p.NameAllowlist = rule
 	}
 
-	p.ExtensionWhitelist = map[string]bool{}
+	p.ExtensionAllowlist = map[string]bool{}
 	for _, oid := range p.AllowedExtensions {
-		p.ExtensionWhitelist[asn1.ObjectIdentifier(oid).String()] = true
+		p.ExtensionAllowlist[asn1.ObjectIdentifier(oid).String()] = true
 	}
 
 	return nil

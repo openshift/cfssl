@@ -8,18 +8,18 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/cloudflare/cfssl/whitelist"
+	"github.com/cloudflare/cfssl/allowlist"
 )
 
-var wl = whitelist.NewBasic()
+var wl = allowlist.NewBasic()
 
 func addIP(w http.ResponseWriter, r *http.Request) {
 	addr := r.FormValue("ip")
 
 	ip := net.ParseIP(addr)
 	wl.Add(ip)
-	log.Printf("request to add %s to the whitelist", addr)
-	w.Write([]byte(fmt.Sprintf("Added %s to whitelist.\n", addr)))
+	log.Printf("request to add %s to the allowlist", addr)
+	w.Write([]byte(fmt.Sprintf("Added %s to allowlist.\n", addr)))
 }
 
 func delIP(w http.ResponseWriter, r *http.Request) {
@@ -27,11 +27,11 @@ func delIP(w http.ResponseWriter, r *http.Request) {
 
 	ip := net.ParseIP(addr)
 	wl.Remove(ip)
-	log.Printf("request to remove %s from the whitelist", addr)
-	w.Write([]byte(fmt.Sprintf("Removed %s from whitelist.\n", ip)))
+	log.Printf("request to remove %s from the allowlist", addr)
+	w.Write([]byte(fmt.Sprintf("Removed %s from allowlist.\n", ip)))
 }
 
-func dumpWhitelist(w http.ResponseWriter, r *http.Request) {
+func dumpAllowlist(w http.ResponseWriter, r *http.Request) {
 	out, err := json.Marshal(wl)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -60,26 +60,26 @@ func main() {
 		http.FileServer(http.Dir(*root)))
 	wl.Add(net.IP{127, 0, 0, 1})
 
-	adminWL := whitelist.NewBasic()
+	adminWL := allowlist.NewBasic()
 	adminWL.Add(net.IP{127, 0, 0, 1})
 	adminWL.Add(net.ParseIP("::1"))
 
-	protFiles, err := whitelist.NewHandler(fileServer, nil, wl)
+	protFiles, err := allowlist.NewHandler(fileServer, nil, wl)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
-	addHandler, err := whitelist.NewHandlerFunc(addIP, nil, adminWL)
+	addHandler, err := allowlist.NewHandlerFunc(addIP, nil, adminWL)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
-	delHandler, err := whitelist.NewHandlerFunc(delIP, nil, adminWL)
+	delHandler, err := allowlist.NewHandlerFunc(delIP, nil, adminWL)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}
 
-	dumpHandler, err := whitelist.NewHandlerFunc(dumpWhitelist, nil, adminWL)
+	dumpHandler, err := allowlist.NewHandlerFunc(dumpAllowlist, nil, adminWL)
 	if err != nil {
 		log.Fatalf("%v", err)
 	}

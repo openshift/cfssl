@@ -145,8 +145,8 @@ func TestLoadBadRootConfs(t *testing.T) {
 		"testdata/roots_badspec.conf",
 		"testdata/roots_badspec2.conf",
 		"testdata/roots_badspec3.conf",
-		"testdata/roots_bad_whitelist.conf",
-		"testdata/roots_bad_whitelist.conf2",
+		"testdata/roots_bad_allowlist.conf",
+		"testdata/roots_bad_allowlist.conf2",
 		"testdata/roots_missing_certificate.conf",
 		"testdata/roots_missing_certificate_entry.conf",
 		"testdata/roots_missing_private_key.conf",
@@ -162,10 +162,10 @@ func TestLoadBadRootConfs(t *testing.T) {
 	}
 }
 
-const confWhitelist = "testdata/roots_whitelist.conf"
+const confAllowlist = "testdata/roots_allowlist.conf"
 
-func TestLoadWhitelist(t *testing.T) {
-	roots, err := Parse(confWhitelist)
+func TestLoadAllowlist(t *testing.T) {
+	roots, err := Parse(confAllowlist)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -207,10 +207,10 @@ func TestLoadWhitelist(t *testing.T) {
 	}
 }
 
-const confWhitelistIPv6 = "testdata/roots_whitelist_ipv6.conf"
+const confAllowlistIPv6 = "testdata/roots_allowlist_ipv6.conf"
 
-func TestLoadIPv6Whitelist(t *testing.T) {
-	roots, err := Parse(confWhitelistIPv6)
+func TestLoadIPv6Allowlist(t *testing.T) {
+	roots, err := Parse(confAllowlistIPv6)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}

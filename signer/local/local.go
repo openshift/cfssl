@@ -215,30 +215,30 @@ func (s *Signer) Sign(req signer.SignRequest) (cert []byte, err error) {
 
 	// Copy out only the fields from the CSR authorized by policy.
 	safeTemplate := x509.Certificate{}
-	// If the profile contains no explicit whitelist, assume that all fields
+	// If the profile contains no explicit allowlist, assume that all fields
 	// should be copied from the CSR.
-	if profile.CSRWhitelist == nil {
+	if profile.CSRAllowlist == nil {
 		safeTemplate = *csrTemplate
 	} else {
-		if profile.CSRWhitelist.Subject {
+		if profile.CSRAllowlist.Subject {
 			safeTemplate.Subject = csrTemplate.Subject
 		}
-		if profile.CSRWhitelist.PublicKeyAlgorithm {
+		if profile.CSRAllowlist.PublicKeyAlgorithm {
 			safeTemplate.PublicKeyAlgorithm = csrTemplate.PublicKeyAlgorithm
 		}
-		if profile.CSRWhitelist.PublicKey {
+		if profile.CSRAllowlist.PublicKey {
 			safeTemplate.PublicKey = csrTemplate.PublicKey
 		}
-		if profile.CSRWhitelist.SignatureAlgorithm {
+		if profile.CSRAllowlist.SignatureAlgorithm {
 			safeTemplate.SignatureAlgorithm = csrTemplate.SignatureAlgorithm
 		}
-		if profile.CSRWhitelist.DNSNames {
+		if profile.CSRAllowlist.DNSNames {
 			safeTemplate.DNSNames = csrTemplate.DNSNames
 		}
-		if profile.CSRWhitelist.IPAddresses {
+		if profile.CSRAllowlist.IPAddresses {
 			safeTemplate.IPAddresses = csrTemplate.IPAddresses
 		}
-		if profile.CSRWhitelist.EmailAddresses {
+		if profile.CSRAllowlist.EmailAddresses {
 			safeTemplate.EmailAddresses = csrTemplate.EmailAddresses
 		}
 	}
@@ -246,20 +246,20 @@ func (s *Signer) Sign(req signer.SignRequest) (cert []byte, err error) {
 	OverrideHosts(&safeTemplate, req.Hosts)
 	safeTemplate.Subject = PopulateSubjectFromCSR(req.Subject, safeTemplate.Subject)
 
-	// If there is a whitelist, ensure that both the Common Name and SAN DNSNames match
-	if profile.NameWhitelist != nil {
+	// If there is a allowlist, ensure that both the Common Name and SAN DNSNames match
+	if profile.NameAllowlist != nil {
 		if safeTemplate.Subject.CommonName != "" {
-			if profile.NameWhitelist.Find([]byte(safeTemplate.Subject.CommonName)) == nil {
+			if profile.NameAllowlist.Find([]byte(safeTemplate.Subject.CommonName)) == nil {
 				return nil, cferr.New(cferr.PolicyError, cferr.InvalidPolicy)
 			}
 		}
 		for _, name := range safeTemplate.DNSNames {
-			if profile.NameWhitelist.Find([]byte(name)) == nil {
+			if profile.NameAllowlist.Find([]byte(name)) == nil {
 				return nil, cferr.New(cferr.PolicyError, cferr.InvalidPolicy)
 			}
 		}
 		for _, name := range safeTemplate.EmailAddresses {
-			if profile.NameWhitelist.Find([]byte(name)) == nil {
+			if profile.NameAllowlist.Find([]byte(name)) == nil {
 				return nil, cferr.New(cferr.PolicyError, cferr.InvalidPolicy)
 			}
 		}
@@ -295,7 +295,7 @@ func (s *Signer) Sign(req signer.SignRequest) (cert []byte, err error) {
 	if len(req.Extensions) > 0 {
 		for _, ext := range req.Extensions {
 			oid := asn1.ObjectIdentifier(ext.ID)
-			if !profile.ExtensionWhitelist[oid.String()] {
+			if !profile.ExtensionAllowlist[oid.String()] {
 				return nil, cferr.New(cferr.CertificateError, cferr.InvalidRequest)
 			}
 

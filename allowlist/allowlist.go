@@ -1,7 +1,7 @@
-// Package whitelist implements IP whitelisting for various types
+// Package allowlist implements IP allowlisting for various types
 // of connections. Two types of access control lists (ACLs) are
 // supported: host-based and network-based.
-package whitelist
+package allowlist
 
 import (
 	"errors"
@@ -16,7 +16,7 @@ import (
 // concurrency as needed.
 type ACL interface {
 	// Permitted takes an IP address, and returns true if the
-	// IP address is whitelisted (e.g. permitted access).
+	// IP address is allowlisted (e.g. permitted access).
 	Permitted(net.IP) bool
 }
 
@@ -24,11 +24,11 @@ type ACL interface {
 type HostACL interface {
 	ACL
 
-	// Add takes an IP address and adds it to the whitelist so
+	// Add takes an IP address and adds it to the allowlist so
 	// that it is now permitted.
 	Add(net.IP)
 
-	// Remove takes an IP address and drops it from the whitelist
+	// Remove takes an IP address and drops it from the allowlist
 	// so that it is no longer permitted.
 	Remove(net.IP)
 }
@@ -48,28 +48,28 @@ func validIP(ip net.IP) bool {
 	return false
 }
 
-// Basic implements a basic map-backed whitelister that uses an
+// Basic implements a basic map-backed allowlister that uses an
 // RWMutex for conccurency. IPv4 addresses are treated differently
 // than an IPv6 address; namely, the IPv4 localhost will not match
 // the IPv6 localhost.
 type Basic struct {
 	lock      *sync.Mutex
-	whitelist map[string]bool
+	allowlist map[string]bool
 }
 
-// Permitted returns true if the IP has been whitelisted.
+// Permitted returns true if the IP has been allowlisted.
 func (wl *Basic) Permitted(ip net.IP) bool {
 	if !validIP(ip) {
 		return false
 	}
 
 	wl.lock.Lock()
-	permitted := wl.whitelist[ip.String()]
+	permitted := wl.allowlist[ip.String()]
 	wl.lock.Unlock()
 	return permitted
 }
 
-// Add whitelists an IP.
+// Add allowlists an IP.
 func (wl *Basic) Add(ip net.IP) {
 	if !validIP(ip) {
 		return
@@ -77,10 +77,10 @@ func (wl *Basic) Add(ip net.IP) {
 
 	wl.lock.Lock()
 	defer wl.lock.Unlock()
-	wl.whitelist[ip.String()] = true
+	wl.allowlist[ip.String()] = true
 }
 
-// Remove clears the IP from the whitelist.
+// Remove clears the IP from the allowlist.
 func (wl *Basic) Remove(ip net.IP) {
 	if !validIP(ip) {
 		return
@@ -88,24 +88,24 @@ func (wl *Basic) Remove(ip net.IP) {
 
 	wl.lock.Lock()
 	defer wl.lock.Unlock()
-	delete(wl.whitelist, ip.String())
+	delete(wl.allowlist, ip.String())
 }
 
-// NewBasic returns a new initialised basic whitelist.
+// NewBasic returns a new initialised basic allowlist.
 func NewBasic() *Basic {
 	return &Basic{
 		lock:      new(sync.Mutex),
-		whitelist: map[string]bool{},
+		allowlist: map[string]bool{},
 	}
 }
 
-// MarshalJSON serialises a host whitelist to a comma-separated list of
+// MarshalJSON serialises a host allowlist to a comma-separated list of
 // hosts, implementing the json.Marshaler interface.
 func (wl *Basic) MarshalJSON() ([]byte, error) {
 	wl.lock.Lock()
 	defer wl.lock.Unlock()
-	var ss = make([]string, 0, len(wl.whitelist))
-	for ip := range wl.whitelist {
+	var ss = make([]string, 0, len(wl.allowlist))
+	for ip := range wl.allowlist {
 		ss = append(ss, ip)
 	}
 
@@ -114,10 +114,10 @@ func (wl *Basic) MarshalJSON() ([]byte, error) {
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface for host
-// whitelists, taking a comma-separated string of hosts.
+// allowlists, taking a comma-separated string of hosts.
 func (wl *Basic) UnmarshalJSON(in []byte) error {
 	if in[0] != '"' || in[len(in)-1] != '"' {
-		return errors.New("whitelist: invalid whitelist")
+		return errors.New("allowlist: invalid allowlist")
 	}
 
 	if wl.lock == nil {
@@ -130,7 +130,7 @@ func (wl *Basic) UnmarshalJSON(in []byte) error {
 	netString := strings.TrimSpace(string(in[1 : len(in)-1]))
 	nets := strings.Split(netString, ",")
 
-	wl.whitelist = map[string]bool{}
+	wl.allowlist = map[string]bool{}
 	for i := range nets {
 		addr := strings.TrimSpace(nets[i])
 		if addr == "" {
@@ -139,23 +139,23 @@ func (wl *Basic) UnmarshalJSON(in []byte) error {
 
 		ip := net.ParseIP(addr)
 		if ip == nil {
-			wl.whitelist = nil
-			return errors.New("whitelist: invalid IP address " + addr)
+			wl.allowlist = nil
+			return errors.New("allowlist: invalid IP address " + addr)
 		}
-		wl.whitelist[addr] = true
+		wl.allowlist[addr] = true
 	}
 
 	return nil
 }
 
-// DumpBasic returns a whitelist as a byte slice where each IP is on
+// DumpBasic returns a allowlist as a byte slice where each IP is on
 // its own line.
 func DumpBasic(wl *Basic) []byte {
 	wl.lock.Lock()
 	defer wl.lock.Unlock()
 
-	var addrs = make([]string, 0, len(wl.whitelist))
-	for ip := range wl.whitelist {
+	var addrs = make([]string, 0, len(wl.allowlist))
+	for ip := range wl.allowlist {
 		addrs = append(addrs, ip)
 	}
 
@@ -165,7 +165,7 @@ func DumpBasic(wl *Basic) []byte {
 	return []byte(addrList)
 }
 
-// LoadBasic loads a whitelist from a byteslice.
+// LoadBasic loads a allowlist from a byteslice.
 func LoadBasic(in []byte) (*Basic, error) {
 	wl := NewBasic()
 	addrs := strings.Split(string(in), "\n")
@@ -173,14 +173,14 @@ func LoadBasic(in []byte) (*Basic, error) {
 	for _, addr := range addrs {
 		ip := net.ParseIP(addr)
 		if ip == nil {
-			return nil, errors.New("whitelist: invalid address")
+			return nil, errors.New("allowlist: invalid address")
 		}
 		wl.Add(ip)
 	}
 	return wl, nil
 }
 
-// HostStub allows host whitelisting to be added into a system's flow
+// HostStub allows host allowlisting to be added into a system's flow
 // without doing anything yet. All operations result in warning log
 // messages being printed to stderr. There is no mechanism for
 // squelching these messages short of modifying the log package's
@@ -188,24 +188,24 @@ func LoadBasic(in []byte) (*Basic, error) {
 type HostStub struct{}
 
 // Permitted always returns true, but prints a warning message alerting
-// that whitelisting is stubbed.
+// that allowlisting is stubbed.
 func (wl HostStub) Permitted(ip net.IP) bool {
-	log.Printf("WARNING: whitelist check for %s but whitelisting is stubbed", ip)
+	log.Printf("WARNING: allowlist check for %s but allowlisting is stubbed", ip)
 	return true
 }
 
-// Add prints a warning message about whitelisting being stubbed.
+// Add prints a warning message about allowlisting being stubbed.
 func (wl HostStub) Add(ip net.IP) {
-	log.Printf("WARNING: IP %s added to whitelist but whitelisting is stubbed", ip)
+	log.Printf("WARNING: IP %s added to allowlist but allowlisting is stubbed", ip)
 }
 
-// Remove prints a warning message about whitelisting being stubbed.
+// Remove prints a warning message about allowlisting being stubbed.
 func (wl HostStub) Remove(ip net.IP) {
-	log.Printf("WARNING: IP %s removed from whitelist but whitelisting is stubbed", ip)
+	log.Printf("WARNING: IP %s removed from allowlist but allowlisting is stubbed", ip)
 }
 
-// NewHostStub returns a new stubbed host whitelister.
+// NewHostStub returns a new stubbed host allowlister.
 func NewHostStub() HostStub {
-	log.Println("WARNING: whitelisting is being stubbed")
+	log.Println("WARNING: allowlisting is being stubbed")
 	return HostStub{}
 }

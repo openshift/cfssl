@@ -14,7 +14,7 @@ import (
 	"github.com/cloudflare/cfssl/multiroot/config"
 	"github.com/cloudflare/cfssl/signer"
 	"github.com/cloudflare/cfssl/signer/local"
-	"github.com/cloudflare/cfssl/whitelist"
+	"github.com/cloudflare/cfssl/allowlist"
 
 	_ "github.com/lib/pq" // import to support Postgres
 )
@@ -41,7 +41,7 @@ func parseSigner(root *config.Root) (signer.Signer, error) {
 var (
 	defaultLabel string
 	signers      = map[string]signer.Signer{}
-	whitelists   = map[string]whitelist.NetACL{}
+	allowlists   = map[string]allowlist.NetACL{}
 )
 
 func main() {
@@ -68,7 +68,7 @@ func main() {
 		}
 		signers[label] = s
 		if root.ACL != nil {
-			whitelists[label] = root.ACL
+			allowlists[label] = root.ACL
 		}
 		log.Info("loaded signer ", label)
 	}
@@ -81,12 +81,12 @@ func main() {
 		log.Criticalf("%v", err)
 	}
 
-	var localhost = whitelist.NewBasic()
+	var localhost = allowlist.NewBasic()
 	localhost.Add(net.ParseIP("127.0.0.1"))
 	localhost.Add(net.ParseIP("::1"))
-	metrics, err := whitelist.NewHandlerFunc(dumpMetrics, metricsDisallowed, localhost)
+	metrics, err := allowlist.NewHandlerFunc(dumpMetrics, metricsDisallowed, localhost)
 	if err != nil {
-		log.Criticalf("failed to set up the metrics whitelist: %v", err)
+		log.Criticalf("failed to set up the metrics allowlist: %v", err)
 	}
 
 	http.HandleFunc("/api/v1/cfssl/authsign", dispatchRequest)

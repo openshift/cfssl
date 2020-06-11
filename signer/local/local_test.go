@@ -706,7 +706,7 @@ func expectEmpty(t *testing.T, s []string, n string) {
 	}
 }
 
-func TestNoWhitelistSign(t *testing.T) {
+func TestNoAllowlistSign(t *testing.T) {
 	csrPEM, err := ioutil.ReadFile(fullSubjectCSR)
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -720,7 +720,7 @@ func TestNoWhitelistSign(t *testing.T) {
 	}
 
 	s := newCustomSigner(t, testECDSACaFile, testECDSACaKeyFile)
-	// No policy CSR whitelist: the normal set of CSR fields get passed through to
+	// No policy CSR allowlist: the normal set of CSR fields get passed through to
 	// certificate.
 	s.policy = &config.Signing{
 		Default: &config.SigningProfile{
@@ -761,7 +761,7 @@ func TestNoWhitelistSign(t *testing.T) {
 	expectOneValueOf(t, name.Country, "US", "C")
 }
 
-func TestWhitelistSign(t *testing.T) {
+func TestAllowlistSign(t *testing.T) {
 	csrPEM, err := ioutil.ReadFile(fullSubjectCSR)
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -774,7 +774,7 @@ func TestWhitelistSign(t *testing.T) {
 	}
 
 	s := newCustomSigner(t, testECDSACaFile, testECDSACaKeyFile)
-	// Whitelist only key-related fields. Subject, DNSNames, etc shouldn't get
+	// Allowlist only key-related fields. Subject, DNSNames, etc shouldn't get
 	// passed through from CSR.
 	s.policy = &config.Signing{
 		Default: &config.SigningProfile{
@@ -782,7 +782,7 @@ func TestWhitelistSign(t *testing.T) {
 			ExpiryString: "1h",
 			Expiry:       1 * time.Hour,
 			CA:           true,
-			CSRWhitelist: &config.CSRWhitelist{
+			CSRAllowlist: &config.CSRAllowlist{
 				PublicKey:          true,
 				PublicKeyAlgorithm: true,
 				SignatureAlgorithm: true,
@@ -809,7 +809,7 @@ func TestWhitelistSign(t *testing.T) {
 	name := cert.Subject
 	if name.CommonName != "" {
 		t.Fatalf("Expected empty certificate common name under policy without "+
-			"Subject whitelist, got %v", name.CommonName)
+			"Subject allowlist, got %v", name.CommonName)
 	}
 	// O is provided by the signing API request, not the CSR, so it's allowed to
 	// be copied into the certificate.
@@ -830,7 +830,7 @@ func TestWhitelistSign(t *testing.T) {
 	}
 }
 
-func TestNameWhitelistSign(t *testing.T) {
+func TestNameAllowlistSign(t *testing.T) {
 	csrPEM, err := ioutil.ReadFile(fullSubjectCSR)
 	if err != nil {
 		t.Fatalf("%v", err)
@@ -846,7 +846,7 @@ func TestNameWhitelistSign(t *testing.T) {
 	wl := regexp.MustCompile("^1[a-z]*[0-9]*\\.cf$")
 
 	s := newCustomSigner(t, testECDSACaFile, testECDSACaKeyFile)
-	// Whitelist only key-related fields. Subject, DNSNames, etc shouldn't get
+	// Allowlist only key-related fields. Subject, DNSNames, etc shouldn't get
 	// passed through from CSR.
 	s.policy = &config.Signing{
 		Default: &config.SigningProfile{
@@ -854,7 +854,7 @@ func TestNameWhitelistSign(t *testing.T) {
 			ExpiryString:  "1h",
 			Expiry:        1 * time.Hour,
 			CA:            true,
-			NameWhitelist: wl,
+			NameAllowlist: wl,
 		},
 	}
 
@@ -923,7 +923,7 @@ func TestExtensionSign(t *testing.T) {
 		t.Fatalf("expected a policy error")
 	}
 
-	// Whitelist a specific extension.  The extension with OID 1.2.3.4 should be
+	// Allowlist a specific extension.  The extension with OID 1.2.3.4 should be
 	// allowed through, but the one with OID 1.2.3.5 should not.
 	s.policy = &config.Signing{
 		Default: &config.SigningProfile{
@@ -931,7 +931,7 @@ func TestExtensionSign(t *testing.T) {
 			ExpiryString:       "1h",
 			Expiry:             1 * time.Hour,
 			CA:                 true,
-			ExtensionWhitelist: map[string]bool{"1.2.3.4": true},
+			ExtensionAllowlist: map[string]bool{"1.2.3.4": true},
 		},
 	}
 

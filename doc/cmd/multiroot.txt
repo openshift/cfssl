@@ -9,7 +9,7 @@ scenario it was originally intended for is
       issuing certificates.
 
 The multirootca configuration file is an ini-style configuration file;
-an example is found in `cmd/multirootca/config/testdata/roots_whitelist.conf`.
+an example is found in `cmd/multirootca/config/testdata/roots_allowlist.conf`.
 
     [ primary ]
     private = file://testdata/server.key
@@ -29,8 +29,8 @@ entry points the certificate PEM file on disk, and the config entry
 points to a cfssl configuration file to use for each signer; the
 format of this file is described in "cfssl.txt". Optionally, a nets
 entry points to a comma-separated list of networks that should be
-permitted access to the signer. This list forms a whitelist; if it's
-not present, all networks are whitelisted for that signer.
+permitted access to the signer. This list forms a allowlist; if it's
+not present, all networks are allowlisted for that signer.
 
 SPECIFYING A PRIVATE KEY
 

@@ -142,7 +142,7 @@ blank.
     + not_after: if provided, this specifies an override for the Not
       After date in certificates signed by the CA.
 
-    + name_whitelist: if provided, this should be a regular expression
+    + name_allowlist: if provided, this should be a regular expression
       for permitted SANs.
 
 The signing profiles reside in the "signing" dictionary. This may

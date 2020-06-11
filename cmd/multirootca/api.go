@@ -12,7 +12,7 @@ import (
 	"github.com/cloudflare/cfssl/helpers"
 	"github.com/cloudflare/cfssl/log"
 	"github.com/cloudflare/cfssl/signer"
-	"github.com/cloudflare/cfssl/whitelist"
+	"github.com/cloudflare/cfssl/allowlist"
 	metrics "github.com/cloudflare/go-metrics"
 )
 
@@ -127,16 +127,16 @@ func dispatchRequest(w http.ResponseWriter, req *http.Request) {
 		sigRequest.Label = defaultLabel
 	}
 
-	acl := whitelists[sigRequest.Label]
+	acl := allowlists[sigRequest.Label]
 	if acl != nil {
-		ip, err := whitelist.HTTPRequestLookup(req)
+		ip, err := allowlist.HTTPRequestLookup(req)
 		if err != nil {
 			fail(w, req, http.StatusInternalServerError, 1, err.Error(), "while getting request IP")
 			return
 		}
 
 		if !acl.Permitted(ip) {
-			fail(w, req, http.StatusForbidden, 1, "not authorised", "because IP is not whitelisted")
+			fail(w, req, http.StatusForbidden, 1, "not authorised", "because IP is not allowed")
 			return
 		}
 	}
@@ -215,7 +215,7 @@ func metricsDisallowed(w http.ResponseWriter, req *http.Request) {
 }
 
 func dumpMetrics(w http.ResponseWriter, req *http.Request) {
-	log.Info("whitelisted requested for metrics endpoint")
+	log.Info("allowlisted requested for metrics endpoint")
 	var statsOut = struct {
 		Metrics metrics.Registry `json:"metrics"`
 		Signers []string         `json:"signers"`

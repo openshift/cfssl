@@ -1,4 +1,4 @@
-package whitelist
+package allowlist
 
 import (
 	"io/ioutil"
@@ -204,7 +204,7 @@ func TestSetupHandlerFuncFails(t *testing.T) {
 
 	_, err = NewHandlerFunc(testAllowHandlerFunc, testDenyHandlerFunc, nil)
 	if err == nil {
-		t.Fatal("expected NewHandlerFunc to fail with nil whitelist")
+		t.Fatal("expected NewHandlerFunc to fail with nil allowlist")
 	}
 
 	_, err = NewHandlerFunc(testAllowHandlerFunc, nil, wl)
@@ -347,7 +347,7 @@ func TestSetupNetHandlerFuncFails(t *testing.T) {
 
 	_, err = NewHandlerFunc(testAllowHandlerFunc, testDenyHandlerFunc, nil)
 	if err == nil {
-		t.Fatal("expected NewHandlerFunc to fail with nil whitelist")
+		t.Fatal("expected NewHandlerFunc to fail with nil allowlist")
 	}
 
 	_, err = NewHandlerFunc(testAllowHandlerFunc, nil, wl)
@@ -405,13 +405,13 @@ func TestNetFailHTTPFunc(t *testing.T) {
 func TestHandlerFunc(t *testing.T) {
 	var acl ACL
 	_, err := NewHandler(testAllowHandler, testDenyHandler, acl)
-	if err == nil || err.Error() != "whitelist: ACL cannot be nil" {
+	if err == nil || err.Error() != "allowlist: ACL cannot be nil" {
 		t.Fatal("Expected error with nil allow handler.")
 	}
 
 	acl = NewBasic()
 	_, err = NewHandler(nil, testDenyHandler, acl)
-	if err == nil || err.Error() != "whitelist: allow cannot be nil" {
+	if err == nil || err.Error() != "allowlist: allow cannot be nil" {
 		t.Fatal("Expected error with nil ACL.")
 	}
 }

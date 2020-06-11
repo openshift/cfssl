@@ -20,7 +20,7 @@ import (
 	"github.com/cloudflare/cfssl/helpers"
 	"github.com/cloudflare/cfssl/helpers/derhelpers"
 	"github.com/cloudflare/cfssl/log"
-	"github.com/cloudflare/cfssl/whitelist"
+	"github.com/cloudflare/cfssl/allowlist"
 
 	"github.com/cloudflare/redoctober/client"
 	"github.com/cloudflare/redoctober/core"
@@ -103,7 +103,7 @@ type Root struct {
 	PrivateKey  crypto.Signer
 	Certificate *x509.Certificate
 	Config      *config.Signing
-	ACL         whitelist.NetACL
+	ACL         allowlist.NetACL
 	DB          *sqlx.DB
 }
 
@@ -248,8 +248,8 @@ func parsePrivateKeySpec(spec string, cfg map[string]string) (crypto.Signer, err
 	}
 }
 
-func parseACL(nets string) (whitelist.NetACL, error) {
-	wl := whitelist.NewBasicNet()
+func parseACL(nets string) (allowlist.NetACL, error) {
+	wl := allowlist.NewBasicNet()
 	netList := strings.Split(nets, ",")
 	for i := range netList {
 		netList[i] = strings.TrimSpace(netList[i])

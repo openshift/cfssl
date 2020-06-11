@@ -1,4 +1,4 @@
-package whitelist
+package allowlist
 
 import (
 	"errors"
@@ -11,12 +11,12 @@ import (
 // net.Conn. A single net.Conn should be passed to Address.
 func NetConnLookup(conn net.Conn) (net.IP, error) {
 	if conn == nil {
-		return nil, errors.New("whitelist: no connection")
+		return nil, errors.New("allowlist: no connection")
 	}
 
 	netAddr := conn.RemoteAddr()
 	if netAddr == nil {
-		return nil, errors.New("whitelist: no address returned")
+		return nil, errors.New("allowlist: no address returned")
 	}
 
 	addr, _, err := net.SplitHostPort(netAddr.String())
@@ -32,7 +32,7 @@ func NetConnLookup(conn net.Conn) (net.IP, error) {
 // *http.Request. A single *http.Request should be passed to Address.
 func HTTPRequestLookup(req *http.Request) (net.IP, error) {
 	if req == nil {
-		return nil, errors.New("whitelist: no request")
+		return nil, errors.New("allowlist: no request")
 	}
 
 	addr, _, err := net.SplitHostPort(req.RemoteAddr)
@@ -45,34 +45,34 @@ func HTTPRequestLookup(req *http.Request) (net.IP, error) {
 
 }
 
-// Handler wraps an HTTP handler with IP whitelisting.
+// Handler wraps an HTTP handler with IP allowlisting.
 type Handler struct {
 	allowHandler http.Handler
 	denyHandler  http.Handler
-	whitelist    ACL
+	allowlist    ACL
 }
 
-// NewHandler returns a new whitelisting-wrapped HTTP handler. The
+// NewHandler returns a new allowlisting-wrapped HTTP handler. The
 // allow handler should contain a handler that will be called if the
-// request is whitelisted; the deny handler should contain a handler
-// that will be called in the request is not whitelisted.
+// request is allowlisted; the deny handler should contain a handler
+// that will be called in the request is not allowlisted.
 func NewHandler(allow, deny http.Handler, acl ACL) (http.Handler, error) {
 	if allow == nil {
-		return nil, errors.New("whitelist: allow cannot be nil")
+		return nil, errors.New("allowlist: allow cannot be nil")
 	}
 
 	if acl == nil {
-		return nil, errors.New("whitelist: ACL cannot be nil")
+		return nil, errors.New("allowlist: ACL cannot be nil")
 	}
 
 	return &Handler{
 		allowHandler: allow,
 		denyHandler:  deny,
-		whitelist:    acl,
+		allowlist:    acl,
 	}, nil
 }
 
-// ServeHTTP wraps the request in a whitelist check.
+// ServeHTTP wraps the request in a allowlist check.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ip, err := HTTPRequestLookup(req)
 	if err != nil {
@@ -82,7 +82,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if h.whitelist.Permitted(ip) {
+	if h.allowlist.Permitted(ip) {
 		h.allowHandler.ServeHTTP(w, req)
 	} else {
 		if h.denyHandler == nil {
@@ -100,23 +100,23 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 type HandlerFunc struct {
 	allow     func(http.ResponseWriter, *http.Request)
 	deny      func(http.ResponseWriter, *http.Request)
-	whitelist ACL
+	allowlist ACL
 }
 
-// NewHandlerFunc returns a new basic whitelisting handler.
+// NewHandlerFunc returns a new basic allowlisting handler.
 func NewHandlerFunc(allow, deny func(http.ResponseWriter, *http.Request), acl ACL) (*HandlerFunc, error) {
 	if allow == nil {
-		return nil, errors.New("whitelist: allow cannot be nil")
+		return nil, errors.New("allowlist: allow cannot be nil")
 	}
 
 	if acl == nil {
-		return nil, errors.New("whitelist: ACL cannot be nil")
+		return nil, errors.New("allowlist: ACL cannot be nil")
 	}
 
 	return &HandlerFunc{
 		allow:     allow,
 		deny:      deny,
-		whitelist: acl,
+		allowlist: acl,
 	}, nil
 }
 
@@ -131,7 +131,7 @@ func (h *HandlerFunc) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	if h.whitelist.Permitted(ip) {
+	if h.allowlist.Permitted(ip) {
 		h.allow(w, req)
 	} else {
 		if h.deny == nil {

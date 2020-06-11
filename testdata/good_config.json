@@ -10,7 +10,7 @@
                     "key encipherment",
                     "server auth"
                 ],
-                "name_whitelist": "^.*\\.cloudflare.com$"
+                "name_allowlist": "^.*\\.cloudflare.com$"
             }
         }
     }

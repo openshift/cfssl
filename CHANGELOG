@@ -16,15 +16,15 @@ ADDED:
          certificates.
        - Signers can now use a serial sequence number for certificate
          serial numbers; the default remains randomised serial numbers.
-       - CSR whitelisting allows the signer to explicitly distrust
+       - CSR allowlisting allows the signer to explicitly distrust
          certain fields in a CSR.
        - Signing profiles can include certificate policies and their
          qualifiers.
        - The multirootca can use Red October-secured private keys.
-       - The multirootca can whitelist CSRs per-signer based on an
-         IP network whitelist.
-       - The signer can whitelist SANs and common names via a regular-
-         expression whitelist.
+       - The multirootca can allowlist CSRs per-signer based on an
+         IP network allowlist.
+       - The signer can allowlist SANs and common names via a regular-
+         expression allowlist.
        - Multiple fallback remote signers are now supported in the
          cfssl server.
        - A Docker build script has been provided to facilitate building
